@@ -1,44 +1,53 @@
-import cv2 as cv
+import cv2
 import numpy as np
+from roboflow import Roboflow
 
-videoCapture =cv.VideoCapture(0)
-prevCircle = None
-dist = lambda x1,y1,x2,y2: (x1-x2)**2*(y1-y1)**2
+# Load the Roboflow model for ball detection
+rf = Roboflow(api_key="smPgmTT9SfHLAuUcQiQc")
+project = rf.workspace().project("golfbot-ltfwe")
+model = project.version(3).model
 
+# Define the range of red color for field detection
+red_lower = np.array([0, 0, 150])
+red_upper = np.array([50, 50, 255])
+
+# Open the video stream
+cap = cv2.VideoCapture(1)  
+ 
 while True:
-    ret, frame = videoCapture.read()
-    if not ret: break
+    # Read a frame from the video stream
+    ret, frame = cap.read()
 
-    grayFrame =cv.cvtColor(frame,cv. COLOR_BGR2GRAY)
-    blurFrame = cv.GaussianBlur(grayFrame, (17,17),0)
+    # Convert the frame to HSV color space
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    circles = cv.HoughCircles(blurFrame,cv.HOUGH_GRADIENT, 1.2, 100, 
-                            param1=100, param2=30, minRadius=20, maxRadius = 400)
+    # Apply the red color range to extract the field
+    mask = cv2.inRange(hsv, red_lower, red_upper)
+    field = cv2.bitwise_and(frame, frame, mask=mask)
 
-    if circles is not None: 
-        circles = np.uint16(np.around(circles))
+    # Use the model to detect the balls
+    detections = model.predict(np.asarray(frame))
 
-        chosen = None 
+    # Get the position of the center of each ball
+    for detection in detections:
+        if detection["class"] == "tableTennisBalls":
+            x = int(detection["x"])
+            y = int(detection["y"])
+            print("Ball position: ({}, {})".format(x, y))
+            # Draw a circle around the detected ball
+            cv2.circle(frame, (x, y), 10, (0, 255, 0), -1)
 
-        for i in circles [0,:]:
-            if chosen is None: 
-                chosen = i
-            if  prevCircle is not None: 
-                if dist(chosen[0],chosen[1],prevCircle[0],prevCircle[1])== dist(i[0],i[1],prevCircle[0],prevCircle[1]):
-                    chosen =i
             
-            cv.circle(frame,(chosen[0],chosen[1]),1,(0,100,100),3)
-            cv.circle(frame,(chosen[0],chosen[1]), chosen[2],(255,0,255),3)
-            prevCircle = chosen
 
+    # Display the image with the detected balls and field
+    cv2.imshow("Frame", frame)
+    cv2.imshow("Field", field)
+    key = cv2.waitKey(1)
 
-        cv.imshow("circles",frame)
+    # Press 'q' to quit
+    if key == ord('q'):
+        break
 
+cap.release()
+cv2.destroyAllWindows()
 
-
-
-  
-    if cv.waitKey(1)& 0xFF == ord('q'): break
-
-videoCapture.release()
-cv.destroyAllWindows()
