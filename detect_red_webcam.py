@@ -1,53 +1,66 @@
-import cv2 as cv
+import cv2
 import numpy as np
 
-# Used for webcam
-cap = cv.VideoCapture(0)
+def captureRed():
 
-# Error check for webcam
-if (cap.isOpened()== False): 
-  print("Error opening video stream or file")
+   # Create a VideoCapture object
+   cam = cv2.VideoCapture(0)
+   
+   # Check if camera opened successfully
+   if not cam.isOpened():
+       print("Could not open camera")
+   
+   else:
+       # Read frame from camera
+       ret, frame = cam.read()
+   
+       # Check if frame is valid
+       if not ret:
+           print("Could not read frame")
+   
+       else:
+           # Convert frame from RGB to HSV
+           hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+   
+           # Define the lower and upper bounds of the lower red range
+           lower_red1 = np.array([0, 50, 50])
+           upper_red1 = np.array([10, 255, 255])
 
-# Continue filming until q is pressed
-while(cap.isOpened()):
-  # Capture frame-by-frame
-  ret, frame = cap.read()
-  if ret == True:
+           # Define the lower and upper bounds of the upper red range
+           lower_red2 = np.array([170, 50, 50])
+           upper_red2 = np.array([180, 255, 255])
+   
+           # Create masks for the red ranges
+           mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+           mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+   
+           # Combine the masks
+           mask = mask1 + mask2
+   
+           # Apply the mask to the original image
+           result = cv2.bitwise_and(frame, frame, mask=mask)
+   
+           # Display the frame in a window
+           cv2.imshow("Webcam Photo", frame)
+   
+           # Wait for key press
+           key = cv2.waitKey(0)
+   
+           # Press 'r' key to retake photo
+           if key == ord('r'):
+              captureRed()
+   
+           # Press 's' key to save photo
+           if key == ord('s'):
+               # save the result as an image file
+               cv2.imwrite("webcam_photo_red.png", result)
+               print("Photo saved as webcam_photo_red.png")
+   
+           # Destroy displayed window
+           cv2.destroyWindow("Webcam Photo")
+           
+   # Release camera
+   cam.release()
 
-    # Converting from RGB to HSV
-    hsv = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
-
-    # Define the lower and upper bounds of color red in HSV values
-    # lower bounds (0-10)
-    lower_red1 = np.array([0, 50, 50])
-    upper_red1 = np.array([10, 255, 255])
-
-    # upper bounds (170-180)
-    lower_red2 = np.array([170, 50, 50])
-    upper_red2 = np.array([180, 255, 255])
-
-    # Creating two masks for the lower and upper bound and combining them
-    mask1 = cv.inRange(hsv, lower_red1, upper_red1)
-    mask2 = cv.inRange(hsv, lower_red2, upper_red2)
-    finalMask = mask1 + mask2
-
-    # Obtaining masked frame
-    filtered = cv.bitwise_and(frame, frame, mask=finalMask)
-
-    # Display the original and filtered frames at the same time
-    cv.imshow('Original',frame)
-    cv.imshow('Filtered',filtered)
-
-    # Exit webcam mode by pressing q
-    if cv.waitKey(25) & 0xFF == ord('q'):
-      break
-
-  # Breaks the loop
-  else: 
-    break
-
-# Release the video capture object
-cap.release()
-
-# Destroy all windows
-cv.destroyAllWindows()
+# Calling functions
+captureRed()
