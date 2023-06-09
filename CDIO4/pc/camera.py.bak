@@ -29,9 +29,9 @@ def detectBalls(frame):
 
 
 def detectRobot(frame):
-    rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
-    project = rf.workspace().project("robotdetection-jvv38")
-    model = project.version(1).model
+    rf = Roboflow(api_key="7QvYOUTL8mLz6MjAONgh")
+    project = rf.workspace().project("golfbot-p3xnx")
+    model = project.version(2).model
 
     robotPosition= (0,0)
     while True:
@@ -40,7 +40,7 @@ def detectRobot(frame):
 
         # Get the position of the center of each robot
         for detection in detections:
-            if detection["class"] == "robot":
+            if detection["class"] == "Robot":
                 x = int(detection["x"])
                 y = int(detection["y"])
                 print("Robot position: ({}, {})".format(x, y))
