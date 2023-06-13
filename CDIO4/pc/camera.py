@@ -5,15 +5,15 @@ from roboflow import Roboflow
 
 def detectBalls(frame):
     # Load the Roboflow model for ball detection
-    rf = Roboflow(api_key="smPgmTT9SfHLAuUcQiQc")
-    project = rf.workspace().project("golfbot-ltfwe")
-    model = project.version(3).model
+    rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
+    project = rf.workspace().project("golfbot-2")
+    model = project.version(5).model
 
     ballPositionList= []
  
     while True:
         # Use the model to detect the balls
-        detections = model.predict(np.asarray(frame))
+        detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
         # Get the position of the center of each ball
         for detection in detections:
@@ -36,7 +36,7 @@ def detectRobot(frame):
     robotPosition= (0,0)
     while True:
         # Use the model to detect the robots
-        detections = model.predict(np.asarray(frame), confidence=20, overlap= 5)
+        detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
         # Get the position of the center of each robot
         for detection in detections:
@@ -51,19 +51,19 @@ def detectRobot(frame):
     return robotPosition
 
  
-def detect_wall(frame): 
+def detectWall(frame): 
     rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
-    project = rf.workspace().project("robotdetection-jvv38")
-    model = project.version(1).model
+    project = rf.workspace().project("golfbot-2")
+    model = project.version(5).model
 
     wallPosition= (0,0)
     while True:
         # Use the model to detect the wall
-        detections = model.predict(np.asarray(frame), confidence=20, overlap= 5)
+        detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
         # Get the position of the center of each wall
         for detection in detections:
-            if detection["class"] == "wall":
+            if detection["class"] == "Wall":
                 x = int(detection["x"])
                 y = int(detection["y"])
                 print("Wall position: ({}, {})".format(x, y))
@@ -77,17 +77,17 @@ def detect_wall(frame):
 
 def detectGate(frame): 
     rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
-    project = rf.workspace().project("robotdetection-jvv38")
-    model = project.version(1).model
+    project = rf.workspace().project("golfbot-2")
+    model = project.version(5).model
 
     gatePosition= (0,0)
     while True:
         # Use the model to detect the gate
-        detections = model.predict(np.asarray(frame), confidence=20, overlap= 5)
+        detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
         # Get the position of the center of each gate
         for detection in detections:
-            if detection["class"] == "gate":
+            if detection["class"] == "Goal":
                 x = int(detection["x"])
                 y = int(detection["y"])
                 print("Gate position: ({}, {})".format(x, y))
@@ -100,17 +100,17 @@ def detectGate(frame):
 
 def detectObstacle(frame): 
     rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
-    project = rf.workspace().project("robotdetection-jvv38")
-    model = project.version(1).model
+    project = rf.workspace().project("golfbot-2")
+    model = project.version(5).model
 
     obstaclePosition= (0,0)
     while True:
         # Use the model to detect the obstacle
-        detections = model.predict(np.asarray(frame), confidence=20, overlap= 5)
+        detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
         # Get the position of the center of each obstacle
         for detection in detections:
-            if detection["class"] == "obstacle":
+            if detection["class"] == "Obstacle":
                 x = int(detection["x"])
                 y = int(detection["y"])
                 print("Obstacle position: ({}, {})".format(x, y))
