@@ -29,9 +29,9 @@ def detectBalls(frame):
 
 
 def detectRobot(frame):
-    rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
-    project = rf.workspace().project("robotdetection-jvv38")
-    model = project.version(1).model
+    rf = Roboflow(api_key="s11nf9RUEgQq22fDC5xh")
+    project = rf.workspace().project("robotdetection-lfmog")
+    model = project.version(2).model
 
     robotPosition= (0,0)
     while True:
