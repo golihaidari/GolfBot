@@ -1,12 +1,14 @@
 import cv2, socket
 import camera
+import random 
+import math 
 
-IP="192.168.43.155"
+IP="172.20.10.3"
 PORT=6666
 
 
 def run():   
-    cap = cv2.VideoCapture(1) 
+    cap = cv2.VideoCapture(0) 
     balls = 0    
     ballExist = True    
     while ballExist:                        
@@ -18,14 +20,16 @@ def run():
         if ret:    
             ballsPositions = camera.detectBalls(frame)
             balls= len(ballsPositions)
-            if balls > 0 : 
+            if balls > 0 :
                 print('1. client: number of detected balls: '+ str(balls))
                 robotPosition = camera.detectRobot(frame)
                 print('2. client: robot position: '+ str(robotPosition))
-                closestBall = findNearestBall(ballsPositions, robotPosition)
-                print('3. client: closest ball position: ' + str(closestBall))
-                
-                msg = sendToRobot(closestBall)
+                randomBall = chooseRandomBall(ballsPositions)
+                randomBall2 = chooseRandomBall(ballsPositions)
+
+                print('3. client: closest ball position: ' + str(randomBall))
+                distance = calculateDistance(randomBall, randomBall2)
+                msg = sendToRobot(randomBall,distance)
                 print('5. Robot*: '+ msg)
             else: 
                 print('-client*: there is no ball')
@@ -36,21 +40,32 @@ def run():
     cap.release()
     cv2.destroyAllWindows()
 
-# need implementation!!!!!!!!!!!!!!!   use vector to find the closest ball and return it
-def findNearestBall(ballsPositions, robotPosition):
-    if len(ballsPositions) > 2 :
-        return ballsPositions[1]
-    else:
-        return ballsPositions[0]
+#calculate the distance between the robot and the ball
+def calculateDistance(position1, position2):
+    x1, y1 = position1
+    x2, y2 = position2
+    nx= (x2-x1)
+    ny= (y2-y1)
+    #distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    print("distance :!!!!")
+    print((nx, ny))
+    return (nx,ny)
+#Choses a random ball
+def chooseRandomBall(ballsPositions):
+    randomIndex = random.randint(0, len(ballsPositions) - 1)
+    return ballsPositions[randomIndex]
 
 
-def sendToRobot(ballposition):
+def sendToRobot(randomBall,distance):
     server = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
     server.connect((IP, PORT))
 
-    data_string = str(ballposition)
+    
+
+    data_string = str(randomBall)+' & '+ str(distance)
     server.send(bytes(data_string,'utf-8'))
-    print('4. client: sent closestball-position to server')
+   
+    print('4. client: sent randomBall-position and calculated distance to server')
 
     buffer = server.recv(1024)
     buffer = buffer.decode('utf-8')

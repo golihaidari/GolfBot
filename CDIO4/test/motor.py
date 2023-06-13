@@ -1,7 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor
-from pybricks.parameters import Port, Stop, SoundFile
+from pybricks.parameters import Port, Stop
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 
@@ -19,19 +19,19 @@ gripper_motor = Motor(Port.B)
 robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=104)
 
 def moveForward(distance):
-    ev3.speaker.say('forward')
+    #ev3.speaker.say('forward')
     robot.straight(distance)
 
 def moveBackward(distance):
-    ev3.speaker.say('backward')
+    #ev3.speaker.say('backward')
     robot.straight(-distance)
 
 def turnRight(degree):
-    ev3.speaker.say('right')
+    #ev3.speaker.say('right')
     robot.turn(degree)
 
 def turnLeft(degree):
-    ev3.speaker.say('left')
+    #ev3.speaker.say('left')
     robot.turn(-degree)
 
 def uTurn():
@@ -40,25 +40,34 @@ def uTurn():
 
 
 def moveArmUp():
-    ev3.speaker.say('arm up')
+    #ev3.speaker.say('arm up')
     gripper_motor.run_until_stalled(-200, then=Stop.COAST, duty_limit=50)
     gripper_motor.reset_angle(0)
        
 def moveArmDown():
-    ev3.speaker.say('hold ball')
+    #ev3.speaker.say('hold ball')
     gripper_motor.reset_angle(0)
     gripper_motor.run_until_stalled(200, then=Stop.HOLD, duty_limit=50)
 
-def runTest():
-    ev3.speaker.play_file(SoundFile.READY) 
-    moveArmDown()       
-    moveForward(1000)
-    moveBackward(1000)
-    turnRight(90)
-    turnLeft(90)
-    uTurn()
-    moveArmUp() 
-    moveForward(200)
+def moveTowardBall(randomBall,distance):
+    #ev3.speaker.play_file(SoundFile.READY) 
+    print("Moving toward ball:", randomBall)
+    moveForward(distance)
+    moveArmDown() 
+    moveArmUp()      
+   
+    
+
+def runTest(resulst):
+    #ev3.speaker.play_file(SoundFile.READY) 
+    #moveArmDown()       
+    moveForward(result)
+    #moveBackward(1000)
+    #turnRight(90)
+    #turnLeft(90)
+    #uTurn()
+    #moveArmUp() 
+    #moveForward(200)
     
     
 
