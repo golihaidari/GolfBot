@@ -75,27 +75,30 @@ def detectWall(frame):
     
 
 
-def detectGate(frame): 
+def detectGoal(frame):
+    # Acessing the roboflow model
     rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
     project = rf.workspace().project("golfbot-2")
     model = project.version(5).model
 
-    gatePosition= (0,0)
+    # List is used to detect the two goals
+    goalPositionList = []
+
     while True:
-        # Use the model to detect the gate
+        # Detecting goals using the roboflow model
         detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
 
-        # Get the position of the center of each gate
+        # Get the position of the center of each goal
         for detection in detections:
             if detection["class"] == "Goal":
                 x = int(detection["x"])
                 y = int(detection["y"])
-                print("Gate position: ({}, {})".format(x, y))
-                # Draw a circle around the detected gate
-                cv2.circle(frame, (x, y), 10, (0, 255, 0), -1)
-                gatePosition= (x,y)
+                print("Goal position: ({}, {})".format(x, y))
+                # Draw a yellow circle around the detected goals
+                cv2.circle(frame, (x, y), 10, (0, 255, 255), -1)
+                goalPositionList.append((x,y))
         break
-    return gatePosition
+    return goalPositionList
     
 
 def detectObstacle(frame): 
