@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./pc"
+    ],
+    "python.analysis.typeCheckingMode": "off"
+}
