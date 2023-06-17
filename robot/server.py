@@ -6,9 +6,12 @@ import motor
 
 #write code to fetch & deliver the ball
 def handleRequest(ballPosition):
-    #print(f'move to {ballPosition}')    
-    motor.runTest()
+    split_instruct=  ballPosition.split(',')
+    msg =''   
+    motor.runTest(split_instruct)
+    msg = 'Ball collected!'
     print('ball is delivered')
+    return msg
 
 try:
     #hostname=socket.gethostname()

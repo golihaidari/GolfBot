@@ -12,8 +12,7 @@ PORT=6666
 
 colors = ((240, 0, 159), (0, 0, 255), (0, 255, 0), (0, 165, 255), (255, 255, 0))
 def run():   
-    cap = cv2.VideoCapture(0) 
-    balls = 0    
+    cap = cv2.VideoCapture(1)  
     ballExist = True    
     while ballExist:
         print("1.client: Start taking a photo")                        
@@ -46,39 +45,25 @@ def run():
 		    # connect them with a line
             cv2.line(frame, (rx,ry), (bx,by), colors[2], 2)  
             
-            # compute the Euclidean distance between the coordinates,
-		    # and then convert the distance in pixels to distance in units
+            # compute the Euclidean distance between the coordinates, and then convert the distance in pixels to distance in units
             # pixelsPerMetric = (rw/float(133))
             # D = dist.euclidean((rx,ry), (bx,by)) / pixelsPerMetric 
             (mX, mY) = midpoint((rx,ry), (bx,by))
             cv2.putText(frame, "{:.1f}mm".format(ballDistance), (int(mX), int(mY - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors[1], 2)
 
-            #compute adjacent
-            cv2.circle(frame,(rx,by), 10, colors[1], -1)
-            cv2.line(frame,(rx, ry), (rx,by), colors[2], 2)
-            (aX, aY)= midpoint((rx,ry), (rx,by))
-            adjacentPointDistance = dist.euclidean((rx,ry), (rx,by)) / (rw/float(133)) 
-            cv2.putText(frame, "{:.1f}mm".format(adjacentPointDistance), (int(aX), int(aY - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors[1], 2)
+            #Display adjacent
+            adjacent = getAdjacent((rx,ry), 'East')
+            cv2.circle(frame,adjacent, 10, colors[1], -1)
+            cv2.line(frame,(rx, ry), adjacent, colors[2], 2)
 
-            #compute opposite
-            cv2.circle(frame,(rx,by), 10, colors[1], -1)
-            cv2.line(frame,(rx, ry), (rx,by), colors[2], 2)
-            (aX, aY)= midpoint((rx,ry), (rx,by))
-            adjacentPointDistance = dist.euclidean((rx,ry), (rx,by)) / (rw/float(133)) 
-            cv2.putText(frame, "{:.1f}mm".format(adjacentPointDistance), (int(aX), int(aY - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors[1], 2)
-
-            c = (rx * rx)+(ry * by)+ (rw *rw)
-            rl= math.sqrt((rx**2) + (ry**2) ) 
-            al= math.sqrt((rx**2) + (by**2) )
-            ral= c/ (rl*al)
-            degree= np.arccos(ral) 
-            print("degree: " + str(degree))
+            degree= getAngle((rx,ry), adjacent, (bx,by))
+            
             # show the output image
             cv2.imshow("Image", frame)
             cv2.waitKey(0)
 		                           
-            msg = sendToRobot((bx,by))
-            if msg != "ball catched":
+            msg = sendToRobot(degree , ballDistance )
+            if msg != "Ball collected!":
                 continue
             
             ret, frame = cap.read() 
@@ -92,6 +77,45 @@ def run():
 
     cap.release()
     cv2.destroyAllWindows()
+
+#Compute angle between robot direction and ball position
+def getAngle(robotposition, adjacent, ballposition):
+    # Calculate the direction vectors of the lines
+    line1_vector = np.array([adjacent[0] - robotposition[0], adjacent[1] - robotposition[1]])
+    line2_vector = np.array([ballposition[0] - robotposition[0], ballposition[1] - robotposition[1]])
+
+    # Calculate the angle between the lines in radians
+    angle_radians = np.arctan2(line2_vector[1], line2_vector[0]) - np.arctan2(line1_vector[1], line1_vector[0])
+    
+    # Convert the angle to degrees
+    angle_degrees = np.degrees(angle_radians)
+
+    # Ensure the angle is within the ranges of -180 to 180 degrees
+    if angle_degrees > 180:
+        angle_degrees -= 360
+    elif angle_degrees < -180:
+        angle_degrees += 360
+    
+    # Print the angle
+    print("Angle (in degrees):", angle_degrees)
+
+    return angle_degrees
+
+#compute adjacent
+def getAdjacent(robotPosition, head):
+    adjacent= None
+    
+    if head == 'North':
+        adjacent= (robotPosition[0], (robotPosition[1] - 100) )
+    elif head == 'South':
+        adjacent= (robotPosition[0], (robotPosition[1] + 100) )
+    elif head == 'East':
+        adjacent= ( (robotPosition[0] + 100), robotPosition[1])
+    elif head == 'West':
+        adjacent= ( (robotPosition[0] - 100), robotPosition[1])
+
+    return adjacent
+
 
 def midpoint(robotPosition, ballPosition):
 	return ((robotPosition[0] + ballPosition[0]) * 0.5, (robotPosition[1] + ballPosition[1]) * 0.5)
@@ -117,11 +141,11 @@ def findNearestGate(robotPosition, gatesPosition):
     return (closestGate, gateDistance)    
     
 
-def sendToRobot(ballposition):
+def sendToRobot(rotattionDegree, ballDistance):
     server = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
     server.connect((IP, PORT))
 
-    data_string = str(ballposition)
+    data_string = str(rotattionDegree) +','+ str(ballDistance)
     server.send(bytes(data_string,'utf-8'))
     print('5. client: sent closestball-position to server')
 

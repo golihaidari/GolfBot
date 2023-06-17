@@ -49,7 +49,7 @@ def moveArmDown():
     gripper_motor.reset_angle(0)
     gripper_motor.run_until_stalled(200, then=Stop.HOLD, duty_limit=50)
 
-def runTest():
+def runTest1():
     ev3.speaker.play_file(SoundFile.READY) 
     moveArmDown()       
     moveForward(1000)
@@ -61,5 +61,13 @@ def runTest():
     moveForward(200)
     
     
-
+def runTest(ballPosition):
+    degree = float(ballPosition[0])
+    distance = float(ballPosition[1])/10
+    ev3.speaker.play_file(SoundFile.READY) 
+    moveArmUp() 
+    robot.turn(degree)
+    robot.straight(distance)
+    moveArmDown()
+    return "done"
 
