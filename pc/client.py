@@ -1,96 +1,96 @@
-import math
 from scipy.spatial import distance as dist
-from imutils import perspective
-from imutils import contours
-import cv2, imutils, socket
 import numpy as np
+import cv2, socket
 import camera
 
+#Author Golbas Haidari
 
 IP="192.168.43.155"
 PORT=6666
+robotRealWidth = 170 #133
 
 colors = ((240, 0, 159), (0, 0, 255), (0, 255, 0), (0, 165, 255), (255, 255, 0))
 def run():   
     cap = cv2.VideoCapture(1)  
-    ballExist = True    
+    ballExist = True
+    ballIsHold = False    
     while ballExist:
-        print("1.client: Start taking a photo")                        
+        print("Start taking a photo")        
         ret, frame = cap.read() 
         cv2.imshow("window", frame)
         if cv2.waitKey(1) == ord('q'):
             break
-        
-        if ret:    
-            ballsPositions = camera.detectBalls(frame)
-            if len(ballsPositions) == 0 : 
-                print('-client*: No ball is detected!!!!')
-                print('-client*: Retry to detect balls')
-                continue
 
-            print('2. client: number of detected balls: '+ str(len(ballsPositions)))
-            (rx, ry, rw) =  camera.detectRobot(frame)
-            if rx == 0:
-                print("-client*: Robot is not detected")
-                print('-client*: Retry to detect Robot')
-                continue                    
+        if ret: 
+            (rx,ry,rw) = camera.detectRobot(frame)
+            objectPositions = []
+            if (ballIsHold == False): 
+                objectPositions = camera.detectBalls(frame)
+                if(objectPositions == 0): 
+                    sendToRobot('disconnect' , 'NA' )
+            else:
+                objectPositions = camera.detectGates(frame)  
 
-            print('3. client: robot position: '+ str(rx) +str(ry))
-            ((bx,by),ballDistance) = findNearestBall(ballsPositions, (rx, ry, rw))             
-            print('4. client: closest ball position: ' + str(bx)+','+str(by))  
+            if (len(objectPositions) > 0) and (rx > 0) :
+                ((objectX,objectY),objectDistance) = findNearestObject(objectPositions, (rx, ry, rw))             
+                    
+                displayObjects(frame, (rx,ry), (objectX,objectY)) 
 
-            # draw circles corresponding to the current points and
-            cv2.circle(frame, (rx,ry), 10, colors[0], -1)
-            cv2.circle(frame, (bx,by), 10, colors[1], -1)
-		    # connect them with a line
-            cv2.line(frame, (rx,ry), (bx,by), colors[2], 2)  
-            
-            # compute the Euclidean distance between the coordinates, and then convert the distance in pixels to distance in units
-            # pixelsPerMetric = (rw/float(133))
-            # D = dist.euclidean((rx,ry), (bx,by)) / pixelsPerMetric 
-            (mX, mY) = midpoint((rx,ry), (bx,by))
-            cv2.putText(frame, "{:.1f}mm".format(ballDistance), (int(mX), int(mY - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors[1], 2)
+                displayDistance(frame, (rx,ry), (objectX,objectY), objectDistance)
 
-            #Display adjacent
-            adjacent = getAdjacent((rx,ry), 'East')
-            cv2.circle(frame,adjacent, 10, colors[1], -1)
-            cv2.line(frame,(rx, ry), adjacent, colors[2], 2)
+                adjacent = getAdjacent((rx,ry), 'East')
+                
+                displayObjects(frame, (rx,ry), adjacent) 
 
-            degree= getAngle((rx,ry), adjacent, (bx,by))
-            
-            # show the output image
-            cv2.imshow("Image", frame)
-            cv2.waitKey(0)
-		                           
-            msg = sendToRobot(degree , ballDistance )
-            if msg != "Ball collected!":
-                continue
-            
-            ret, frame = cap.read() 
-            if ret:
-                gatesPosition = camera.detectGates(frame)
-                robotPosition = camera.detectRobot(frame)
-                closestGate= findNearestGate(gatesPosition, robotPosition)
-                msg= sendToRobot(closestGate)
+                degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
+                
+                # show the output image
+                cv2.imshow("Image", frame)
+                print('Enter to send the data to the robot')
+                cv2.waitKey(0)
 
-            print('6. Robot*: '+ msg)
+                msg = sendToRobot(degree , objectDistance )
+                print('Robot*:'+ msg)
+
+                if msg == "ballIsHold:True":
+                    ballIsHold = True
+                else:
+                    ballIsHold = False
+            else:
+                print('Error: could  NOT find ball/gate/robot objects!!. Retry detection')
+        else:
+            print('Error: could NOT read frame!!')          
 
     cap.release()
     cv2.destroyAllWindows()
 
+def displayObjects(frame, object1, object2):
+    # draw circles corresponding to the current points and
+    cv2.circle(frame, object1, 10, colors[0], -1)
+    cv2.circle(frame, object2, 10, colors[1], -1)
+	# connect them with a line
+    cv2.line(frame, object1, object2, colors[2], 2)
+
+def midpoint(robotPosition, objectPosition):
+	return ((robotPosition[0] + objectPosition[0]) * 0.5, (robotPosition[1] + objectPosition[1]) * 0.5)
+
+def displayDistance(frame, object1, object2, objectDistance):
+    (mX, mY) = midpoint(object1, object2)
+    cv2.putText(frame, "{:.1f}mm".format(objectDistance), (int(mX), int(mY - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors[1], 2)
+
 #Compute angle between robot direction and ball position
-def getAngle(robotposition, adjacent, ballposition):
+def getAngle(robotposition, adjacent, objectPosition):
     # Calculate the direction vectors of the lines
-    line1_vector = np.array([adjacent[0] - robotposition[0], adjacent[1] - robotposition[1]])
-    line2_vector = np.array([ballposition[0] - robotposition[0], ballposition[1] - robotposition[1]])
+    line1 = np.array([adjacent[0] - robotposition[0], adjacent[1] - robotposition[1]])
+    line2 = np.array([objectPosition[0] - robotposition[0], objectPosition[1] - robotposition[1]])
 
     # Calculate the angle between the lines in radians
-    angle_radians = np.arctan2(line2_vector[1], line2_vector[0]) - np.arctan2(line1_vector[1], line1_vector[0])
+    angle_radians = np.arctan2(line2[1], line2[0]) - np.arctan2(line1[1], line1[0])
     
     # Convert the angle to degrees
     angle_degrees = np.degrees(angle_radians)
 
-    # Ensure the angle is within the ranges of -180 to 180 degrees
+    # Ensure the angle is within the range of -180 to 180 degrees
     if angle_degrees > 180:
         angle_degrees -= 360
     elif angle_degrees < -180:
@@ -116,38 +116,25 @@ def getAdjacent(robotPosition, head):
 
     return adjacent
 
-
-def midpoint(robotPosition, ballPosition):
-	return ((robotPosition[0] + ballPosition[0]) * 0.5, (robotPosition[1] + ballPosition[1]) * 0.5)
-
-def findNearestBall(ballsPositions, robotPosition):
-    closestBall = ballsPositions[0]
-    ballDistance = dist.euclidean((robotPosition[0],robotPosition[1]), (closestBall)) / (robotPosition[2]/float(133))    
-    for bp in ballsPositions:
-        newdistance = dist.euclidean((robotPosition[0],robotPosition[1]), (bp)) / (robotPosition[2]/float(133))
-        if(newdistance < ballDistance):
-            ballDistance = newdistance
-            closestBall = bp
-    return (closestBall, ballDistance)
+def findNearestObject(objectPositionList, robotPosition):
+    closestPosition = objectPositionList[0]
+    objectDistance = dist.euclidean((robotPosition[0],robotPosition[1]), closestPosition) / (robotPosition[2]/float(robotRealWidth))    
+    for object in objectPositionList:
+        newDistance = dist.euclidean((robotPosition[0],robotPosition[1]), (object)) / (robotPosition[2]/float(robotRealWidth))
+        if(newDistance < objectDistance):
+            objectDistance = newDistance
+            closestPosition = object
+    print('Closest-object position: ' + str(closestPosition[0])+','+str(closestPosition[1])) 
+    return (closestPosition, objectDistance) 
     
-def findNearestGate(robotPosition, gatesPosition):
-    closestGate = gatesPosition[0]
-    gateDistance = dist.euclidean((robotPosition[0],robotPosition[1]), (closestGate)) / (robotPosition[2]/float(133))    
-    for gp in gatesPosition:
-        newPosition = dist.euclidean((robotPosition[0],robotPosition[1]), (gp)) / (robotPosition[2]/float(133))
-        if(newPosition < gateDistance):
-            gateDistance = newPosition
-            closestGate = gp
-    return (closestGate, gateDistance)    
-    
-
-def sendToRobot(rotattionDegree, ballDistance):
+def sendToRobot(rotattionDegree, objectDistance):
     server = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
     server.connect((IP, PORT))
 
-    data_string = str(rotattionDegree) +','+ str(ballDistance)
+    data_string = str(rotattionDegree) +','+ str(objectDistance)
+    print(data_string)
     server.send(bytes(data_string,'utf-8'))
-    print('5. client: sent closestball-position to server')
+    print('Instruction is sent to robot')
 
     buffer = server.recv(1024)
     buffer = buffer.decode('utf-8')
@@ -156,7 +143,6 @@ def sendToRobot(rotattionDegree, ballDistance):
 
     return buffer
     
-
 if __name__ == '__main__':
     run()
 

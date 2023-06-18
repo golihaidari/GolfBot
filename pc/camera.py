@@ -1,6 +1,7 @@
 import numpy as np
 from roboflow import Roboflow
 
+#Author Golbas Haidari
 
 def detectBalls(frame):
     # Load the Roboflow model for ball detection
@@ -20,8 +21,9 @@ def detectBalls(frame):
                 x = int(detection["x"])
                 y = int(detection["y"])               
                 ballPositionList.append((x,y))
-                print("Ball position: ({}, {})".format(x, y))
+                print("-Ball position: ({}, {})".format(x, y))
         break
+    print('Detected balls:', len(ballPositionList))
     return ballPositionList
 
 
@@ -41,13 +43,10 @@ def detectRobot(frame):
             width = int(detection["width"])              
             if (x > 0) or (y > 0):
                 robotPosition= (x,y,width)
-                print("Robot position: ({}, {}, {})".format(x, y, width))
+                print("-Robot position: ({}, {}, {})".format(x, y, width))
     return robotPosition
 
         
-         
-
- 
 def detectWall(frame): 
     rf = Roboflow(api_key="cMW2MDLBCvueMKT3Gbfj")
     project = rf.workspace().project("golfbot-2")
@@ -64,7 +63,7 @@ def detectWall(frame):
                 x = int(detection["x"])
                 y = int(detection["y"])                
                 wallPosition.append((x,y))
-                print("Wall position: ({}, {})".format(x, y))
+                print("-Wall position: ({}, {})".format(x, y))
         break
     return wallPosition
     
@@ -75,7 +74,7 @@ def detectGates(frame):
     project = rf.workspace().project("golfbot-2")
     model = project.version(5).model
 
-    gatePosition= (0,0)
+    gatePosition= []
     while True:
         # Use the model to detect the gate
         detections = model.predict(np.asarray(frame), confidence=40, overlap= 30)
@@ -86,7 +85,7 @@ def detectGates(frame):
                 x = int(detection["x"])
                 y = int(detection["y"])                
                 gatePosition.append((x,y))
-                print("Gate position: ({}, {})".format(x, y))
+                print("-Gate position: ({}, {})".format(x, y))
         break
     return gatePosition
     
@@ -107,6 +106,6 @@ def detectObstacle(frame):
                 x = int(detection["x"])
                 y = int(detection["y"])                
                 obstaclePosition= (x,y)
-                print("Obstacle position: ({}, {})".format(x, y))
+                print("-Obstacle position: ({}, {})".format(x, y))
         break
     return obstaclePosition

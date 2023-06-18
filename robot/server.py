@@ -1,48 +1,54 @@
 #!/usr/bin/env pybricks-micropython
 import socket
 import motor
+import threading
 
 #Author Golbas Haidari
 
-#write code to fetch & deliver the ball
-def handleRequest(ballPosition):
-    split_instruct=  ballPosition.split(',')
-    msg =''   
-    motor.runTest(split_instruct)
-    msg = 'Ball collected!'
-    print('ball is delivered')
-    return msg
-
-try:
-    #hostname=socket.gethostname()
-    #IP = socket.gethostbyname(hostname)
-    IP = '192.168.43.155'
-    Port=6666
-
-    server = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
-    server.bind((IP,Port))
-    server.listen(5)
-    print ("Start listening....")
-
-    while True:    
-        client, address = server.accept()    
-        #print (f'Connection established - {address[0]} : {address[1]}')   
-
-        data= client.recv(1024)
-        ballPosition= data.decode('utf-8')
-        print(ballPosition)         
+def handle_client(client, address):
+    ballIsHold= False
+    while True:
+        # Receive message from the client
+        message = client.recv(1024).decode('utf-8')
+        instruction =  message.split(',')
         
-        handleRequest(ballPosition)
+        # Check if client wants to exit
+        if instruction[0] == 'disconnect':
+            print('Received instruction: ' + str(instruction[0]) )
+            break
 
-        client.send('Ball collected!'.encode())
+        print("ballIsHold:"+ str(ballIsHold))
+        degree = float(instruction[0])
+        distance = float(instruction[1])
+        if (ballIsHold == False):
+            ballIsHold = motor.moveToBall(degree, distance)
+        else:
+            ballIsHold = motor.moveToGate(degree, distance)
+        response = "ballIsHold:" + str(ballIsHold)
+        print(response)
+        client.send(response.encode())
 
-        client.close()
+    client.close()
 
-except: 
-    print('Error occoured!!')
+def run():
+    IP = '192.168.43.155'
+    Port=6666   
 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((IP, Port))  
+    server.listen(5)
+    print('Start listening...')
 
+    while True:
+        # Accept client connections
+        client, address = server.accept()
 
+        # Start a new thread to handle the client
+        client_thread = threading.Thread(target=handle_client, args=(client, address))
+        client_thread.start()
+
+if __name__ == '__main__':
+    run()
 
 
 

@@ -61,13 +61,20 @@ def runTest1():
     moveForward(200)
     
     
-def runTest(ballPosition):
-    degree = float(ballPosition[0])
-    distance = float(ballPosition[1])/10
-    ev3.speaker.play_file(SoundFile.READY) 
+def moveToBall(degree, distance):    
+    ev3.speaker.play_file(SoundFile.READY)
     moveArmUp() 
-    robot.turn(degree)
+    robot.turn(degree)    
     robot.straight(distance)
-    moveArmDown()
-    return "done"
+    moveArmDown() 
+    inverseDegree = (degree * -1)
+    print("degree: ", inverseDegree)
+    robot.turn(inverseDegree)
+    ballIsHold = True
+    return ballIsHold
+
+
+def moveToGate(degree, distance):
+    ballIsHold = False
+    return ballIsHold
 
