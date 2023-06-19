@@ -23,41 +23,47 @@ def run():
 
         if ret: 
             (rx,ry,rw) = camera.detectRobot(frame)
+            if(rx == 0):
+                print('Robot is not detetced!, Retry...')
+                continue
+
             objectPositions = []
             if (ballIsHold == False): 
                 objectPositions = camera.detectBalls(frame)
-                if(objectPositions == 0): 
+                if(len(objectPositions) == 0): 
+                    print('Balls not detected. Retry...')
                     sendToRobot('disconnect' , 'NA' )
+                    continue
             else:
                 objectPositions = camera.detectGates(frame)  
+                if(len(objectPositions) == 0):
+                    print('Gates not detected. Retry...')
+                    continue
 
-            if (len(objectPositions) > 0) and (rx > 0) :
-                ((objectX,objectY),objectDistance) = findNearestObject(objectPositions, (rx, ry, rw))             
+            ((objectX,objectY),objectDistance) = findNearestObject(objectPositions, (rx, ry, rw))             
                     
-                displayObjects(frame, (rx,ry), (objectX,objectY)) 
+            displayObjects(frame, (rx,ry), (objectX,objectY)) 
 
-                displayDistance(frame, (rx,ry), (objectX,objectY), objectDistance)
+            displayDistance(frame, (rx,ry), (objectX,objectY), objectDistance)
 
-                adjacent = getAdjacent((rx,ry), 'East')
+            adjacent = getAdjacent((rx,ry), 'East')
                 
-                displayObjects(frame, (rx,ry), adjacent) 
+            displayObjects(frame, (rx,ry), adjacent) 
 
-                degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
+            degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
                 
-                # show the output image
-                cv2.imshow("Image", frame)
-                print('Enter to send the data to the robot')
-                cv2.waitKey(0)
+            # show the output image
+            cv2.imshow("Image", frame)
+            print('Enter to send the data to the robot')
+            cv2.waitKey(0)
 
-                msg = sendToRobot(degree , objectDistance )
-                print('Robot*:'+ msg)
+            msg = sendToRobot(degree , objectDistance )
+            print('Robot*:'+ msg)
 
-                if msg == "ballIsHold:True":
-                    ballIsHold = True
-                else:
-                    ballIsHold = False
+            if msg == "ballIsHold:True":
+                ballIsHold = True
             else:
-                print('Error: could  NOT find ball/gate/robot objects!!. Retry detection')
+                ballIsHold = False
         else:
             print('Error: could NOT read frame!!')          
 

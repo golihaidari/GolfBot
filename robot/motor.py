@@ -67,6 +67,7 @@ def moveToBall(degree, distance):
     robot.turn(degree)    
     robot.straight(distance)
     moveArmDown() 
+    #use color sensor to confirm the ball is hold
     inverseDegree = (degree * -1)
     print("degree: ", inverseDegree)
     robot.turn(inverseDegree)
@@ -74,7 +75,12 @@ def moveToBall(degree, distance):
     return ballIsHold
 
 
-def moveToGate(degree, distance):
+def moveToGate(degree, distance):  
+    ev3.speaker.play_file(SoundFile.READY)  
+    robot.turn(degree) 
+    robot.straight(distance)
+    moveArmUp()
+    robot.straight(50)
     ballIsHold = False
     return ballIsHold
 
