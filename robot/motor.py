@@ -59,30 +59,23 @@ def runTest1():
     uTurn()
     moveArmUp() 
     moveForward(200)
-    
-    
-#def moveToBall(degree, distance, correctionDegree): 
-def moveToBall(degree, distance):    
+        
+def moveToBall(degree, distance, correctionDegree):    
     ev3.speaker.play_file(SoundFile.READY)
     moveArmUp() 
     robot.turn(degree)    
     robot.straight(distance)
     moveArmDown() 
-    robot.turn((degree*-1))
-    #color sensor confirms the ball is hold
-    #color = sensor.detectBallColor()
-    #ballIsHold = False
-    #if color != 'unknown':
+    robot.turn(correctionDegree)
     ballIsHold = True
     return ballIsHold
 
 
-#def moveToGate(degree, distance, correctionDegree): 
-def moveToGate(degree, distance):  
+def moveToGate(degree, distance, correctionDegree): 
     ev3.speaker.play_file(SoundFile.READY)  
     robot.turn(degree) 
     robot.straight(distance)
-    robot.turn((degree*-1))
+    robot.turn(correctionDegree)
     moveArmUp()
     robot.straight(50)
     ballIsHold = False

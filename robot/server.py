@@ -7,7 +7,6 @@ import threading
 
 def handle_client(client_socket):
     ballIsHold= False
-
     while True:
         # Receive message from the client
         message = client_socket.recv(1024).decode('utf-8')
@@ -21,10 +20,11 @@ def handle_client(client_socket):
         print("ballIsHold:"+ str(ballIsHold))
         degree = float(instruction[0])
         distance = float(instruction[1])
+        correctionDegree = float(instruction[2])
         if (ballIsHold == False):
-            ballIsHold = motor.moveToBall(degree, distance)
+            ballIsHold = motor.moveToBall(degree, distance, correctionDegree)
         else:
-            ballIsHold = motor.moveToGate(degree, distance)
+            ballIsHold = motor.moveToGate(degree, distance, correctionDegree)
         response = "ballIsHold:" + str(ballIsHold)
         print(response)
         client_socket.send(response.encode())

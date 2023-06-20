@@ -54,15 +54,15 @@ def run():
 
             degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
 
-            #(direction, autoCorrectionDegree) = AutoCorrect(head, degree)
-            #head = direction 
+            (direction, autoCorrectionDegree) = AutoCorrect(head, degree)
+            head = direction 
               
             # show the output image
             cv2.imshow("Image", frame)
             print('Enter to send the data to the robot')
             cv2.waitKey(0)
 
-            msg = sendToRobot(server_socket, degree , (objectDistance-150) )
+            msg = sendToRobot(server_socket, degree , (objectDistance-150), autoCorrectionDegree )
             print('Robot*:'+ msg)
 
             if msg == "ballIsHold:True":
@@ -169,8 +169,8 @@ def connectToRobot(IP, PORT):
     print('Connection to the robot is established.')
     return server_socket
 
-def sendToRobot(server_socket, rotattionDegree, objectDistance):
-    data_string = str(rotattionDegree) +','+ str(objectDistance)
+def sendToRobot(server_socket, rotattionDegree, objectDistance, autoCorrectionDegree):
+    data_string = str(rotattionDegree) +','+ str(objectDistance) + ','+ str(autoCorrectionDegree)
     print(data_string)
     server_socket.send(bytes(data_string,'utf-8'))
     print('Instruction is sent to robot')
