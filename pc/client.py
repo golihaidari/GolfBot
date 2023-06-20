@@ -10,7 +10,9 @@ PORT=6666
 robotRealWidth = 170 #133
 
 colors = ((240, 0, 159), (0, 0, 255), (0, 255, 0), (0, 165, 255), (255, 255, 0))
-def run():   
+def run(): 
+    server_socket = connectToRobot(IP, PORT)
+    head= 'East'
     cap = cv2.VideoCapture(1)  
     ballExist = True
     ballIsHold = False    
@@ -46,18 +48,21 @@ def run():
 
             displayDistance(frame, (rx,ry), (objectX,objectY), objectDistance)
 
-            adjacent = getAdjacent((rx,ry), 'East')
+            adjacent = getAdjacent((rx,ry), head)
                 
             displayObjects(frame, (rx,ry), adjacent) 
 
             degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
-                
+
+            #(direction, autoCorrectionDegree) = AutoCorrect(head, degree)
+            #head = direction 
+              
             # show the output image
             cv2.imshow("Image", frame)
             print('Enter to send the data to the robot')
             cv2.waitKey(0)
 
-            msg = sendToRobot(degree , objectDistance )
+            msg = sendToRobot(server_socket, degree , (objectDistance-150) )
             print('Robot*:'+ msg)
 
             if msg == "ballIsHold:True":
@@ -69,6 +74,7 @@ def run():
 
     cap.release()
     cv2.destroyAllWindows()
+    disconnect(server_socket)
 
 def displayObjects(frame, object1, object2):
     # draw circles corresponding to the current points and
@@ -122,6 +128,30 @@ def getAdjacent(robotPosition, head):
 
     return adjacent
 
+def AutoCorrect(head, degree):
+    direction= head
+    if(head=='East' and degree >= -90 and degree <= 90):
+        degree = (degree* -1)
+        direction= 'East'
+    elif(head=='East' and degree > 90 ):
+        degree = 180 - degree
+        direction = 'West'
+    elif(head=='East' and degree < -90):
+        degree= (-180) - degree
+        direction = 'west'
+
+    elif(head=='West' and degree >= -90 and degree <= 90):
+        degree = (degree* -1)
+        direction = 'West'
+    elif(head=='West' and degree > 90 ):
+        degree = 180 - degree
+        direction = 'East'
+    elif(head=='West' and degree < -90):
+        degree= (-180) - degree
+        direction = 'East'
+    print('head: '+ head + "correctionDegree: "+ str(degree))
+    return(direction, str(degree))
+
 def findNearestObject(objectPositionList, robotPosition):
     closestPosition = objectPositionList[0]
     objectDistance = dist.euclidean((robotPosition[0],robotPosition[1]), closestPosition) / (robotPosition[2]/float(robotRealWidth))    
@@ -132,22 +162,24 @@ def findNearestObject(objectPositionList, robotPosition):
             closestPosition = object
     print('Closest-object position: ' + str(closestPosition[0])+','+str(closestPosition[1])) 
     return (closestPosition, objectDistance) 
-    
-def sendToRobot(rotattionDegree, objectDistance):
-    server = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
-    server.connect((IP, PORT))
 
+def connectToRobot(IP, PORT):
+    server_socket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
+    server_socket.connect((IP, PORT))
+    print('Connection to the robot is established.')
+    return server_socket
+
+def sendToRobot(server_socket, rotattionDegree, objectDistance):
     data_string = str(rotattionDegree) +','+ str(objectDistance)
     print(data_string)
-    server.send(bytes(data_string,'utf-8'))
+    server_socket.send(bytes(data_string,'utf-8'))
     print('Instruction is sent to robot')
 
-    buffer = server.recv(1024)
-    buffer = buffer.decode('utf-8')
+    message = server_socket.recv(1024).decode('utf-8')
+    return message
 
-    server.close()
-
-    return buffer
+def disconnect(server_socket):
+    server_socket.close()
     
 if __name__ == '__main__':
     run()

@@ -15,6 +15,14 @@ front_sensor = UltrasonicSensor(Port.S1)
 right_sensor = InfraredSensor(Port.S2)
 color_sensor = ColorSensor(Port.S3)
 
+def detecBallColor():
+    x= 0
+    while x< 3:
+        color = color_sensor.color()
+        if(color == Color.WHITE or color == Color.YELLOW):
+            return str(color)
+    return 'unknown'
+    
 
 def color_sensor_detect():
     b= True

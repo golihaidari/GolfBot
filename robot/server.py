@@ -5,13 +5,14 @@ import threading
 
 #Author Golbas Haidari
 
-def handle_client(client, address):
+def handle_client(client_socket):
     ballIsHold= False
+
     while True:
         # Receive message from the client
-        message = client.recv(1024).decode('utf-8')
+        message = client_socket.recv(1024).decode('utf-8')
         instruction =  message.split(',')
-        
+        print('msg'+message)
         # Check if client wants to exit
         if instruction[0] == 'disconnect':
             print('Received instruction: ' + str(instruction[0]) )
@@ -26,26 +27,25 @@ def handle_client(client, address):
             ballIsHold = motor.moveToGate(degree, distance)
         response = "ballIsHold:" + str(ballIsHold)
         print(response)
-        client.send(response.encode())
+        client_socket.send(response.encode())
 
-    client.close()
+    client_socket.close()
 
 def run():
     IP = '192.168.43.155'
     Port=6666   
 
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((IP, Port))  
-    server.listen(5)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((IP, Port))  
+    server_socket.listen(1)
     print('Start listening...')
 
-    while True:
-        # Accept client connections
-        client, address = server.accept()
+    # Accept client connections
+    client_socket, address = server_socket.accept()
+    print('connected to', address)
 
-        # Start a new thread to handle the client
-        client_thread = threading.Thread(target=handle_client, args=(client, address))
-        client_thread.start()
+    handle_client(client_socket)
+    
 
 if __name__ == '__main__':
     run()

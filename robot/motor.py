@@ -16,7 +16,7 @@ right_motor = Motor(Port.D)
 gripper_motor = Motor(Port.B)
 
 # Initialize the drive base.
-robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=104)
+robot = DriveBase(left_motor, right_motor, wheel_diameter=45.5, axle_track=120)
 
 def moveForward(distance):
     ev3.speaker.say('forward')
@@ -61,24 +61,28 @@ def runTest1():
     moveForward(200)
     
     
+#def moveToBall(degree, distance, correctionDegree): 
 def moveToBall(degree, distance):    
     ev3.speaker.play_file(SoundFile.READY)
     moveArmUp() 
     robot.turn(degree)    
     robot.straight(distance)
     moveArmDown() 
-    #use color sensor to confirm the ball is hold
-    inverseDegree = (degree * -1)
-    print("degree: ", inverseDegree)
-    robot.turn(inverseDegree)
+    robot.turn((degree*-1))
+    #color sensor confirms the ball is hold
+    #color = sensor.detectBallColor()
+    #ballIsHold = False
+    #if color != 'unknown':
     ballIsHold = True
     return ballIsHold
 
 
+#def moveToGate(degree, distance, correctionDegree): 
 def moveToGate(degree, distance):  
     ev3.speaker.play_file(SoundFile.READY)  
     robot.turn(degree) 
     robot.straight(distance)
+    robot.turn((degree*-1))
     moveArmUp()
     robot.straight(50)
     ballIsHold = False
