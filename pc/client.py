@@ -5,14 +5,15 @@ import camera
 
 #Author Golbas Haidari
 
-IP="192.168.43.155"
+IP="192.168.38.142"
+
 PORT=6666
 robotRealWidth = 170 #133
 
 colors = ((240, 0, 159), (0, 0, 255), (0, 255, 0), (0, 165, 255), (255, 255, 0))
 def run(): 
     server_socket = connectToRobot(IP, PORT)
-    head= 'East'
+    head= 'EAST'
     cap = cv2.VideoCapture(1)  
     ballExist = True
     ballIsHold = False    
@@ -34,7 +35,7 @@ def run():
                 objectPositions = camera.detectBalls(frame)
                 if(len(objectPositions) == 0): 
                     print('Balls not detected. Retry...')
-                    sendToRobot('disconnect' , 'NA' )
+                    sendToRobot('disconnect' , 'NA',-'NA' )
                     continue
             else:
                 objectPositions = camera.detectGates(frame)  
@@ -54,15 +55,16 @@ def run():
 
             degree= getAngle((rx,ry), adjacent, (objectX,objectY)) 
 
-            (direction, autoCorrectionDegree) = AutoCorrect(head, degree)
-            head = direction 
+            #(direction, autoCorrectionDegree) = AutoCorrect(head, degree)
+            #head = direction
+            print('Robot is headed:', head)
               
             # show the output image
             cv2.imshow("Image", frame)
             print('Enter to send the data to the robot')
             cv2.waitKey(0)
 
-            msg = sendToRobot(server_socket, degree , (objectDistance-150), autoCorrectionDegree )
+            msg = sendToRobot(server_socket, degree , (objectDistance-110), (degree*-1) )
             print('Robot*:'+ msg)
 
             if msg == "ballIsHold:True":
@@ -117,40 +119,42 @@ def getAngle(robotposition, adjacent, objectPosition):
 def getAdjacent(robotPosition, head):
     adjacent= None
     
-    if head == 'North':
+    if head == 'NORTH':
         adjacent= (robotPosition[0], (robotPosition[1] - 100) )
-    elif head == 'South':
+    elif head == 'SOUTH':
         adjacent= (robotPosition[0], (robotPosition[1] + 100) )
-    elif head == 'East':
+    elif head == 'EAST':
         adjacent= ( (robotPosition[0] + 100), robotPosition[1])
-    elif head == 'West':
+    elif head == 'WEST':
         adjacent= ( (robotPosition[0] - 100), robotPosition[1])
 
     return adjacent
 
 def AutoCorrect(head, degree):
     direction= head
-    if(head=='East' and degree >= -90 and degree <= 90):
-        degree = (degree* -1)
-        direction= 'East'
-    elif(head=='East' and degree > 90 ):
+    if(head=='EAST' and degree >= -90 and degree <= 90):
+        degree = -degree
+        direction= 'EAST'
+    elif(head=='EAST' and degree > 90 ):
         degree = 180 - degree
-        direction = 'West'
-    elif(head=='East' and degree < -90):
-        degree= (-180) - degree
-        direction = 'west'
+        direction = 'WEST'
+    elif(head=='EAST' and degree < -90):
+        degree = 180 + degree
+        direction = 'WEST'
 
-    elif(head=='West' and degree >= -90 and degree <= 90):
-        degree = (degree* -1)
-        direction = 'West'
-    elif(head=='West' and degree > 90 ):
-        degree = 180 - degree
-        direction = 'East'
-    elif(head=='West' and degree < -90):
-        degree= (-180) - degree
-        direction = 'East'
+    elif(head=='WEST' and degree >= -90 and degree <= 90):
+        degree = -degree
+        direction = 'WEST'
+    elif(head=='WEST' and degree > 90 ):
+        degree = -180 + degree
+        direction = 'EAST'
+    elif(head=='WEST' and degree < -90):
+        degree = 180 + degree
+        direction = 'WEST'
     print('head: '+ head + "correctionDegree: "+ str(degree))
     return(direction, str(degree))
+
+
 
 def findNearestObject(objectPositionList, robotPosition):
     closestPosition = objectPositionList[0]
