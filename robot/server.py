@@ -1,57 +1,67 @@
 #!/usr/bin/env pybricks-micropython
-import socket
-import motor
-import threading
+from pybricks.hubs import EV3Brick
+from pybricks.ev3devices import UltrasonicSensor, InfraredSensor, ColorSensor
+from pybricks.parameters import Port, Stop, Color, SoundFile
 
 #Author Golbas Haidari
 
-def handle_client(client_socket):
-    ballIsHold= False
-    while True:
-        # Receive message from the client
-        message = client_socket.recv(1024).decode('utf-8')
-        instruction =  message.split(',')
-        print('msg'+message)
-        # Check if client wants to exit
-        if instruction[0] == 'disconnect':
-            print('Received instruction: ' + str(instruction[0]) )
-            break
+# Initialize the EV3 Brick.
+ev3 = EV3Brick()
 
-        print("ballIsHold:"+ str(ballIsHold))
-        degree = float(instruction[0])
-        distance = float(instruction[1])
-        correctionDegree = float(instruction[2])
-        if (ballIsHold == False):
-            ballIsHold = motor.moveToBall(degree, distance, correctionDegree)
-        else:
-            ballIsHold = motor.moveToGate(degree, distance, correctionDegree)
-        response = "ballIsHold:" + str(ballIsHold)
-        print(response)
-        client_socket.send(response.encode())
+# The colored objects are white or brwon.
+POSSIBLE_COLORS = [Color.YELLOW, Color.BLACK]
 
-    client_socket.close()
+front_sensor = UltrasonicSensor(Port.S1)
+#right_sensor = InfraredSensor(Port.S2)
+color_sensor = ColorSensor(Port.S3)
 
-def run():
-    IP = '192.168.43.155'
-    Port=6666   
-
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((IP, Port))  
-    server_socket.listen(1)
-    print('Start listening...')
-
-    # Accept client connections
-    client_socket, address = server_socket.accept()
-    print('connected to', address)
-
-    handle_client(client_socket)
+def detectBallColor():
+    color = color_sensor.color()
+    return color
     
 
-if __name__ == '__main__':
-    run()
+def color_sensor_detect():
+    b= True
+    ev3.speaker.say('Start testing color sensor')
+    while b == True:
+        color = color_sensor.color()        
+        if (color_sensor.color() == Color.WHITE):
+            b= False
+        ev3.speaker.say(str(color))
+    ev3.speaker.say('finished.')
+
+
+
+def front_sensor_detect():
+    b = True
+    ev3.speaker.say('Start testing front sensor')
+    while b == True:
+        distance = front_sensor.distance()
+        ev3.speaker.say('distance' + str(distance/10)) # ultrasonic return the distance in mm , to gain cm we divde by 10
+        if (distance < 68):
+            b= False
+    ev3.speaker.say('finished.')
+
+
+
+def right_sensor_detect():
+    b = True
+    ev3.speaker.say('Start testing right sensor')
+    while b == True:
+        distance = right_sensor.distance()
+        ev3.speaker.say(str(distance))
+        if (distance < 3):
+            b= False
+    ev3.speaker.say('finished.') 
 
 
 
 
 
+def runTest():
 
+    color_sensor_detect()
+
+    front_sensor_detect()
+    
+    right_sensor_detect()

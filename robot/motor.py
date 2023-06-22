@@ -5,6 +5,8 @@ from pybricks.parameters import Port, Stop, SoundFile
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 
+import sensor
+
 #Author Golbas Haidari
 
 # Initialize the EV3 Brick.
@@ -64,20 +66,27 @@ def moveToBall(degree, distance, correctionDegree):
     ev3.speaker.play_file(SoundFile.READY)
     moveArmUp() 
     robot.turn(degree)    
-    robot.straight(distance)
+    robot.straight((distance-5))
     moveArmDown() 
     robot.turn(correctionDegree)
-    ballIsHold = True
+    #color sensor confirms the ball is hold
+    color = sensor.detectBallColor()
+    print(color)
+    ballIsHold = False
+    if str(color) != "None":
+        ballIsHold = True
     return ballIsHold
+    
 
 
 def moveToGate(degree, distance, correctionDegree): 
     ev3.speaker.play_file(SoundFile.READY)  
     robot.turn(degree) 
-    robot.straight(distance)
+    robot.straight((distance))
     robot.turn(correctionDegree)
+    
     moveArmUp()
-    robot.straight(50)
+    robot.straight(90)
     ballIsHold = False
     return ballIsHold
 

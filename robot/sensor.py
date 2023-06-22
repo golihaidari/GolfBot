@@ -9,19 +9,15 @@ from pybricks.parameters import Port, Stop, Color, SoundFile
 ev3 = EV3Brick()
 
 # The colored objects are white or brwon.
-POSSIBLE_COLORS = [Color.WHITE, Color.BROWN]
+POSSIBLE_COLORS = [Color.YELLOW, Color.BLACK]
 
 front_sensor = UltrasonicSensor(Port.S1)
-right_sensor = InfraredSensor(Port.S2)
+#right_sensor = InfraredSensor(Port.S2)
 color_sensor = ColorSensor(Port.S3)
 
-def detecBallColor():
-    x= 0
-    while x< 3:
-        color = color_sensor.color()
-        if(color == Color.WHITE or color == Color.YELLOW):
-            return str(color)
-    return 'unknown'
+def detectBallColor():
+    color = color_sensor.color()
+    return color
     
 
 def color_sensor_detect():
